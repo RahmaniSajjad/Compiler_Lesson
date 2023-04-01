@@ -207,3 +207,200 @@ Addition infers Expression:
 Primary infers Expression:
     '(' Expression ')' | {Literal} value=NUMBER;
 ```
+وقتی تجزیه یک سند به شکل `def x: (1 + 2) + 3` باشد، شکل گره مدل معنایی آن به صورت زیر می باشد:
+
+{{<mermaid>}}
+graph TD;
+expr((expr)) --> left((left))
+expr --> right((right))
+left --> left_left((left))
+left --> left_right((right))
+right --> right_left((left))
+left_left --> left_left_v{1}
+left_right --> left_right_{2}
+right_left --> right_left_v{3}
+{{</mermaid>}}
+
+می‌توانیم ببینیم که گره‌های تودرتو `right -> left` در درخت غیر ضروری هستند و می‌خواهیم یک سطح تودرتو از درخت را حذف کنیم.
+این کار را می توان با تغییر شکل دستور زبان و اضافه کردن یک عمل اختصاص داده شده انجام داد:
+
+```langium
+Definition: 
+    'def' name=ID ':' expr=Addition ';';
+Expression:
+    Addition;
+Addition infers Expression:
+    Primary ({infer Addition.left=current} '+' right=Primary)*;
+    
+Primary infers Expression:
+    '(' Expression ')' | {Literal} value=NUMBER;
+```
+
+اکنون تجزیه همان سند به این مدل معنایی تبدیل می شود:
+
+{{<mermaid>}}
+graph TD;
+expr((expr)) --> left((left))
+expr --> right((right))
+left --> left_left((left))
+left --> left_right((right))
+right --> right_v{3}
+left_left --> left_left_v{1}
+left_right --> left_right_{2}
+{{</mermaid>}}
+
+با اینکه این یک مثال نسبتاً پیش پا افتاده است، اضافه کردن لایه‌های بیشتری از انواع عبارت در گرامر، کیفیت درخت نحو شما را به شدت کاهش می‌دهد، زیرا هر لایه ویژگی خالی `right` دیگری را به درخت اضافه می‌کند. اقدامات تعیین شده این موضوع را به طور کامل برطرف می کند.
+## انواع اعلام شده(Declared Types)
+این مهم است که به خاطر داشته باشید که با اینکه که انواع اعلام شده می توانند گرامرهای شما را بهبود بخشند، آنها یک ویژگی *bleeding edge هستند و هنوز در حال توسعه می باشند*.
+از آنجا که استنتاج نوع هر موجودیت یک قانون را در نظر می گیرد، حتی کوچکترین تغییرات می تواند انواع استنتاج شده شما را به روز کند. این می تواند منجر به تغییرات ناخواسته در مدل معنایی شما و رفتار نادرست خدمات وابسته به آن شود. برای کاهش احتمال تغییرات ناسازگار هنگام اصلاح دستور زبان، *انواع اعلام شده* را به عنوان یک ویژگی جدید معرفی کرده ایم.
+در بیشتر موارد، به‌ویژه برای طراحی‌های اولیه زبان، استفاده از استنتاج نوع برای تولید انواع بهترین انتخاب خواهد بود. همانطور که زبان شما شروع به رشد می کند، بهتر است که بخش هایی از مدل معنایی خود را با استفاده از انواع اعلام شده اصلاح کنید.
+با این وجود، انواع اعلام شده می تواند *به خصوص* برای زبان های بالغ تر و پیچیده تر مفید باشد، جایی که یک مدل معنایی پایدار کلیدی است و تغییرات ناسازگار ایجاد شده توسط انواع استنباط شده می تواند خدمات زبان شما را خراب کند. انواع اعلام شده به کاربر این امکان را می دهد که نوع قوانین تجزیه کننده خود را **درست کند** و برای شناسایی تغییرات ناسازگار بر قدرت خطاهای اعتبارسنجی تکیه کند.
+
+
+بیایید به مثال بخش قبلی بپردازیم:
+
+```langium
+X infers MyType: name=ID;
+Y infers MyType: name=ID count=INT;
+
+// should be replaced by:
+interface MyType {
+    name: string
+    count?: number
+}
+
+X returns MyType: name=ID;
+Y returns MyType: name=ID count=INT;
+```
+
+اکنون به صراحت "MyType" را مستقیماً در گرامر با کلمه کلیدی `interface` اعلام می کنیم. قوانین تجزیه کننده `X` و `Y` که گره‌هایی از نوع `MyType` ایجاد می‌کنند، باید به صراحت نوع گره‌ای را که ایجاد می‌کنند با کلمه کلیدی `returns` اعلام کنند.
+
+بر خلاف [inferred types](#inferred-types), همه ویژگی ها باید به ترتیب اعلام شوند تا درون یک قانون تجزیه معتبر باشند. دستور زیر:
+
+```langium
+Z returns MyType: name=ID age=INT;
+```
+
+خطای اعتبارسنجی زیر را نشان می‌دهد `A property 'age' is not expected` زیرا اعلان `MyType` شامل ویژگی `age` نمی‌شود. به طور خلاصه، *انواع اعلام شده* یک لایه حفاظتی از طریق اعتبارسنجی به دستور زبان اضافه می کند که از عدم تطابق بین انواع مدل معنایی مورد انتظار و شکل گره های تجزیه شده جلوگیری می کند.
+
+
+یک نوع اعلام شده همچنین می تواند انواع را گسترش دهد، مانند انواع دیگر اعلام شده یا انواع استنتاج شده از قوانین تجزیه کننده:
+
+```langium
+interface MyType {
+    name: string
+}
+
+interface MyOtherType extends MyType {
+    count: number
+}
+
+Y returns MyOtherType: name=ID count=INT;
+```
+
+اعلان صریح انواع اتحاد در گرامر با کلمه کلیدی `type` به دست می آید:
+```ts
+type X = A | B;
+
+// generates:
+type X = A | B;
+```
+
+<!-- Please note that it is not allowed to use an alias type as a return type in a parser rule. The following syntax is invalid:
+```
+type X = A | B;
+
+Y returns X: name=ID;
+``` -->
+
+استفاده از `return` همیشه انتظار ارجاع به نوع موجود را دارد. برای ایجاد یک نوع جدید برای قانون خود، از کلمه کلیدی `infers` استفاده کنید یا به صراحت یک رابط را اعلام کنید.
+### ارجاعات متقابل، آرایه ها و جایگزین ها
+
+
+انواع اعلان شده دارای دستور خاصی برای اعلام ارجاعات متقابل، آرایه ها و جایگزین ها هستند:
+
+
+```langium
+interface A {
+    reference: @B
+    array: B[]
+    alternative: B | C
+}
+
+interface B {
+    name: string
+}
+
+interface C {
+    name: string
+    count: number
+}
+
+X returns A: reference=[B:ID] array+=Y (array+=Y)* alternative=(Y | Z);
+
+Y returns B: 'Y' name=ID;
+
+Z returns C: 'Z' name=ID count=INT;
+```
+
+### اقدامات(Actions)
+
+
+اقدامات مربوط به یک نوع اعلام شده دارای دستور زیر هستند:
+
+```langium
+interface A {
+    name: string
+}
+
+interface B {
+    name: string
+    count: number
+}
+
+X: 
+    {A} 'A' name=ID 
+  | {B} 'B' name=ID count=INT;
+```
+
+به عدم وجود کلمه کلیدی `infer` در مقایسه با [actions which infer a type](#simple-actions) توجه داشته باشید.
+
+## اتحادهای مرجع
+
+
+تلاش برای ارجاع به انواع مختلف عناصر می تواند فرآیندی مستعد خطا باشد. به قانون زیر نگاهی بیندازید که سعی می‌کند به یک `Function` یا `Variable` ارجاع دهد:
+
+
+```langium
+MemberCall: (element=[Function:ID] | element=[Variable:ID]);
+```
+
+از آنجایی که هر دو گزینه از نظر تجزیه‌کننده فقط یک `ID` هستند، این دستور زبان قابل تصمیم‌گیری نیست و سند `CLI `langium در طول تولید با خطا مواجه می‌شود. خوشبختانه، ما می‌توانیم با افزودن یک لایه غیرمستقیم با استفاده از یک قانون تجزیه‌کننده اضافی، این مورد را بهبود بخشیم:
+```langium
+NamedElement: Function | Variable;
+
+MemberCall: element=[NamedElement:ID];
+```
+
+این به ما این امکان را می‌دهد با استفاده از قانون رایج `NamedElement` به `Function` یا `Variable` ارجاع دهیم. هرچند، اکنون قانونی را معرفی کرده‌ایم که هرگز تجزیه نمی‌شود، بلکه فقط برای هدف سیستم نوع وجود دارد تا انواع هدف صحیح مرجع را انتخاب کند. با استفاده از انواع اعلام شده، می‌توانیم این قانون استفاده‌ نشده را اصلاح کنیم و گرامر خود را در این فرآیند انعطاف‌ پذیرتر کنیم:
+```langium
+// Note the `type` prefix here
+type NamedElement = Function | Variable;
+
+MemberCall: element=[NamedElement:ID];
+```
+
+همچنین می‌توانیم از رابط‌ها به جای انواع اتحاد با نتایج مشابه استفاده کنیم:
+
+
+```langium
+interface NamedElement {
+    name: string
+}
+
+// Infers an interface `Function` that extends `NamedElement`
+Function returns NamedElement: {infer Function} "function" name=ID ...;
+
+// This also picks up on the `Function` elements
+MemberCall: element=[NamedElement:ID];
+```
