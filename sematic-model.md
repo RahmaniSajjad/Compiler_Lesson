@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+
 
 # استنتاج مدل معنایی
 زمانی که در فرایند تجزیه یک سند، گره‌های AST ساخته می‌شوند، به آن‌ها یک نوع اختصاص داده می‌شود. دستور زبان شکل این نوع و رابطه آن با سایر نوع‌ها را تعیین می‌کند و تمام انواع مدل معنایی زبان شما را تشکیل می‌دهند. دو روش برای استخراج انواع مدل معنایی زبان از دستور زبان وجود دارد که به ترتیب به صورت استنباطی و اعلانی عمل می‌کنند.
@@ -404,3 +406,8 @@ Function returns NamedElement: {infer Function} "function" name=ID ...;
 // This also picks up on the `Function` elements
 MemberCall: element=[NamedElement:ID];
 ```
+
+
+<script>
+mermaid.initialize({startOnLoad:true});
+</script>
