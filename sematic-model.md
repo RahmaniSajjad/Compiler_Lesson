@@ -1,6 +1,3 @@
-<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-
-
 # استنتاج مدل معنایی
 زمانی که در فرایند تجزیه یک سند، گره‌های AST ساخته می‌شوند، به آن‌ها یک نوع اختصاص داده می‌شود. دستور زبان شکل این نوع و رابطه آن با سایر نوع‌ها را تعیین می‌کند و تمام انواع مدل معنایی زبان شما را تشکیل می‌دهند. دو روش برای استخراج انواع مدل معنایی زبان از دستور زبان وجود دارد که به ترتیب به صورت استنباطی و اعلانی عمل می‌کنند.
 
@@ -211,17 +208,8 @@ Primary infers Expression:
 ```
 وقتی تجزیه یک سند به شکل `def x: (1 + 2) + 3` باشد، شکل گره مدل معنایی آن به صورت زیر می باشد:
 
-{{<mermaid>}}
-graph TD;
-expr((expr)) --> left((left))
-expr --> right((right))
-left --> left_left((left))
-left --> left_right((right))
-right --> right_left((left))
-left_left --> left_left_v{1}
-left_right --> left_right_{2}
-right_left --> right_left_v{3}
-{{</mermaid>}}
+<img src="https://mermaid.ink/svg/pako:eNptUEsKwjAQvUqYVQLtQt1FcNUb6DJQQjP9YJOWmIpScneTWgxVNzPz5n0Wb4ZqUAgchGmsHFtyKY7C4GO0lMbJGMnzE-mxdpTGydibXt62a9rwX1YkouCjL7emLfftXI6U-cdb_oaX93nnVzYFJFjOe79GJ3eCwX4IPGSg0WrZqVDDLAwhAlyLGgXwcCppryLU44NOTm44P00F3NkJM5hGJR0WnQzdaeC17G_oXwXrdGU" align="center" alt="My Flowchart"  width="300" height="400" />
+
 
 می‌توانیم ببینیم که گره‌های تودرتو `right -> left` در درخت غیر ضروری هستند و می‌خواهیم یک سطح تودرتو از درخت را حذف کنیم.
 این کار را می توان با تغییر شکل دستور زبان و اضافه کردن یک عمل اختصاص داده شده انجام داد:
@@ -240,16 +228,7 @@ Primary infers Expression:
 
 اکنون تجزیه همان سند به این مدل معنایی تبدیل می شود:
 
-{{<mermaid>}}
-graph TD;
-expr((expr)) --> left((left))
-expr --> right((right))
-left --> left_left((left))
-left --> left_right((right))
-right --> right_v{3}
-left_left --> left_left_v{1}
-left_right --> left_right_{2}
-{{</mermaid>}}
+<img src="https://mermaid.ink/svg/pako:eNplkMsKwjAQRX8lzCqBdqHuIrjqH-gyEEIzfWCTljQVJfTfTVq0VDfzOvcOzAQoe43AoXZqaMitOAuLz8FRmiJjJM8vpMPKU5oiYytexq6tmzhfUgJJ8NXLvWnPfp1Lse2Uj3CaV4_8Xxrp4UM349bKcJwhA4POqFbH04KwhAjwDRoUwGOplbsLEDbp1OT768uWwL2bMINp0Mpj0ar4EQO8Ut2I8xsgfmSI" align="center" alt="My Flowchart"  width="300" height="400" />
 
 با اینکه این یک مثال نسبتاً پیش پا افتاده است، اضافه کردن لایه‌های بیشتری از انواع عبارت در گرامر، کیفیت درخت نحو شما را به شدت کاهش می‌دهد، زیرا هر لایه ویژگی خالی `right` دیگری را به درخت اضافه می‌کند. اقدامات تعیین شده این موضوع را به طور کامل برطرف می کند.
 ## انواع اعلام شده(Declared Types)
@@ -406,8 +385,3 @@ Function returns NamedElement: {infer Function} "function" name=ID ...;
 // This also picks up on the `Function` elements
 MemberCall: element=[NamedElement:ID];
 ```
-
-
-<script>
-mermaid.initialize({startOnLoad:true});
-</script>
